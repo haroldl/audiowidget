@@ -7,9 +7,9 @@ object AudioWidget {
     val window = new GraphWindow()
     window.display()
 
-    val mixer = AudioParser.getMixerByName( /* "Microphone (9- USB VoIP Device)" */ )
-    val line = AudioParser.getSomeInputLine(mixer)
-    val parser = new AudioParser(line.getFormat)
+    val mixer = Audio.getMixerByName( /* "Microphone (9- USB VoIP Device)" */ )
+    val line = Audio.getSomeInputLine(mixer)
+    val parser = new Audio(line.getFormat)
     while (true) {
       val data = parser.readFrames(line)
       window.setData(rescaleData(data, window.getMaxYValueForOscilloscope.getOrElse(1000).toFloat))
