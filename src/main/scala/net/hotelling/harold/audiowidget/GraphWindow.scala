@@ -109,7 +109,7 @@ class Keyboard extends JPanel {
   }
 
   def drawWhiteKey(g2d: Graphics2D, i: Int): Unit = {
-    g2d.drawRect(keywidth * i, 0, keywidth, getHeight)
+    g2d.drawRect(keywidth * i + 1, 1, keywidth - 1, getHeight - 1)
   }
 
   def drawBlackKey(g2d: Graphics2D, i: Int): Unit = {

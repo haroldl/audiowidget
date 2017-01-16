@@ -13,7 +13,7 @@ object AudioWidget {
     while (true) {
       val data = parser.readFrames(line)
       window.setData(rescaleData(data, window.getMaxYValueForOscilloscope.getOrElse(1000).toFloat))
-      val intensityData = DFT.dft(data, parser.format.getFrameRate, 40, 10000).map { v => (v * 10).toInt }
+      val intensityData = DFT.dft(data, parser.format.getFrameRate, 40, 5000).map { v => (v * 10).toInt }
       window.setIntensity(rescaleData(intensityData, window.getMaxYValueForFrequencies.getOrElse(1000).toFloat))
     }
   }
