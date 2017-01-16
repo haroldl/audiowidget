@@ -1,7 +1,7 @@
 package net.hotelling.harold.audiowidget
 
 import java.awt._
-import javax.swing.{JFrame, JPanel, SwingUtilities}
+import javax.swing.{BoxLayout, JFrame, JPanel, SwingUtilities}
 
 /**
   * Use Swing to display a graph in a window.
@@ -27,9 +27,18 @@ class GraphWindow {
     override def run(): Unit = {
       val frame = new JFrame("Audio Widget")
       frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE)
+
       val graph = new Graph()
       GraphWindow.this.graph = Some(graph)
-      frame.getContentPane.add(graph)
+      val keyboard = new Keyboard()
+
+      val container = new JPanel()
+      container.setLayout(new BoxLayout(container, BoxLayout.Y_AXIS))
+
+      container.add(graph)
+      container.add(keyboard)
+
+      frame.getContentPane.add(container)
       frame.pack()
       frame.setLocationByPlatform(true)
       frame.setVisible(true)
@@ -67,4 +76,41 @@ class Graph extends JPanel {
       g2d.drawLine(x1, y1, x2, y2)
     }
   }
+}
+
+class Keyboard extends JPanel {
+  val preferredWidth = 1024
+  val numOctaves = 5
+  val numKeys = 7 * numOctaves
+  val keywidth = (preferredWidth.toFloat / numKeys).toInt
+
+  val white = new Color(255, 255, 255)
+  val black = new Color(0, 0, 0)
+
+  override def getPreferredSize = new Dimension(preferredWidth, 100)
+
+  override def paintComponent(g: Graphics): Unit = {
+    super.paintComponent(g)
+    val g2d = g.asInstanceOf[Graphics2D]
+    g2d.setColor(black)
+    (0 to numKeys) foreach { i =>
+      drawWhiteKey(g2d, i)
+      if (isBlackNote(i)) drawBlackKey(g2d, i)
+    }
+  }
+
+  def drawWhiteKey(g2d: Graphics2D, i: Int): Unit = {
+    g2d.drawRect(keywidth * i, 0, keywidth, getHeight)
+  }
+
+  def drawBlackKey(g2d: Graphics2D, i: Int): Unit = {
+    val x1 = (keywidth * (i - 0.25)).toInt
+    val height = (getHeight * 0.4).toInt
+    g2d.fillRect(x1, 0, keywidth / 2, height)
+  }
+
+
+  val blackNotes = Set(1, 2, 4, 5, 6)
+
+  def isBlackNote(i: Int) = blackNotes.contains(i % 7)
 }
