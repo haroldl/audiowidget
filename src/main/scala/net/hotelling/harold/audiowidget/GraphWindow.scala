@@ -7,36 +7,45 @@ import javax.swing.{BoxLayout, JFrame, JPanel, SwingUtilities}
   * Use Swing to display a graph in a window.
   */
 class GraphWindow {
-  @volatile var graph: Option[Graph] = None
+  @volatile var oscilloscope: Option[Graph] = None
+  @volatile var intensity: Option[Graph] = None
 
   def display(): Unit = {
     SwingUtilities.invokeLater(DisplayDriver)
   }
 
-  def getMaxYValue: Option[Int] = graph.map { g => (g.getHeight - g.margin) / 2 }
+  def getMaxYValueForOscilloscope: Option[Int] = oscilloscope.map { g => (g.getHeight - g.margin) / 2 }
+  def getMaxYValueForFrequencies: Option[Int] = intensity.map { g => (g.getHeight - g.margin) / 2 }
 
-  def setData(data: Array[Int]): Unit = {
-    graph.foreach { g =>
+  def setData(data: Array[Int]): Unit = setDataInOptionalGraph(oscilloscope, data)
+  def setIntensity(data: Array[Int]): Unit = setDataInOptionalGraph(intensity, data)
+
+  private def setDataInOptionalGraph(target: Option[Graph], data: Array[Int]): Unit = {
+    target.foreach { g =>
       g.values = data
       g.repaint()
       g.revalidate()
     }
   }
 
-  private[this] object DisplayDriver extends Runnable {
+  private object DisplayDriver extends Runnable {
     override def run(): Unit = {
       val frame = new JFrame("Audio Widget")
       frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE)
 
-      val graph = new Graph()
-      GraphWindow.this.graph = Some(graph)
+      val graph = new Graph(400)
+      GraphWindow.this.oscilloscope = Some(graph)
+
       val keyboard = new Keyboard()
+
+      GraphWindow.this.intensity = Some(new Graph(200))
 
       val container = new JPanel()
       container.setLayout(new BoxLayout(container, BoxLayout.Y_AXIS))
 
       container.add(graph)
       container.add(keyboard)
+      container.add(GraphWindow.this.intensity.get)
 
       frame.getContentPane.add(container)
       frame.pack()
@@ -46,13 +55,13 @@ class GraphWindow {
   }
 }
 
-class Graph extends JPanel {
+class Graph(val preferredHeight: Int = 700) extends JPanel {
   @volatile var values: Array[Int] = (1 to 1024).map(i => (100f * Math.sin(i / 20f)).toInt).toArray
   val margin: Int = 20
   val axesColor = new Color(128, 128, 255)
   val dataColor = new Color(255, 128, 128)
 
-  override def getPreferredSize = new Dimension(1024, 768)
+  override def getPreferredSize = new Dimension(1024, preferredHeight)
 
   override def paintComponent(g: Graphics): Unit = {
     super.paintComponent(g)
