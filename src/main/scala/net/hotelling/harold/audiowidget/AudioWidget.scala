@@ -18,7 +18,6 @@ object AudioWidget {
     val parser = new AudioParser(line.getFormat)
     while (true) {
       val data = parser.readFrames(line)
-      println(s"${data.length} values, e.g. ${data(0)}, ${data(1)}, ...")
       window.setData(rescaleData(data, window.getMaxYValue.getOrElse(1000).toFloat))
     }
   }
