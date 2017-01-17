@@ -63,6 +63,7 @@ class Graph(val preferredHeight: Int = 700) extends JPanel {
   val margin: Int = 20
   val axesColor = new Color(128, 128, 255)
   val dataColor = new Color(255, 128, 128)
+  val backgroundColor = new Color(255, 255, 255)
 
   override def getPreferredSize = new Dimension(1024, preferredHeight)
 
@@ -70,6 +71,9 @@ class Graph(val preferredHeight: Int = 700) extends JPanel {
     super.paintComponent(g)
     val g2d = g.asInstanceOf[Graphics2D]
     g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
+
+    g2d.setColor(backgroundColor)
+    g2d.fillRect(0, 0, getWidth, getHeight)
 
     val width = getWidth
     val height = getHeight
@@ -104,6 +108,8 @@ class Keyboard extends JPanel {
   override def paintComponent(g: Graphics): Unit = {
     super.paintComponent(g)
     val g2d = g.asInstanceOf[Graphics2D]
+    g2d.setColor(white)
+    g2d.fillRect(0, 0, getWidth, getHeight)
     g2d.setColor(black)
     (0 to numKeys) foreach { i =>
       drawWhiteKey(g2d, i)

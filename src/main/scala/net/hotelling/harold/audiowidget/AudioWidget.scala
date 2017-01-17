@@ -4,10 +4,11 @@ package net.hotelling.harold.audiowidget
 object AudioWidget {
 
   def main(args: Array[String]) {
-    val window = new GraphWindow(Audio.mixerNamesWithInputSupport())
+    val inputMixerNames = Audio.mixerNamesWithInputSupport()
+    val window = new GraphWindow(inputMixerNames)
     window.display()
 
-    val mixer = Audio.getMixerByName( /* "Microphone (9- USB VoIP Device)" */ )
+    val mixer = Audio.getMixerByName(inputMixerNames(0))
     val line = Audio.getSomeInputLine(mixer)
     val parser = new Audio(line.getFormat)
     while (true) {
