@@ -1,12 +1,12 @@
 package net.hotelling.harold.audiowidget
 
 import java.awt._
-import javax.swing.{BoxLayout, JFrame, JPanel, SwingUtilities}
+import javax.swing._
 
 /**
   * Use Swing to display a graph in a window.
   */
-class GraphWindow {
+class GraphWindow(val mixerNames: Array[String]) {
   @volatile var oscilloscope: Option[Graph] = None
   @volatile var intensity: Option[Graph] = None
 
@@ -33,6 +33,8 @@ class GraphWindow {
       val frame = new JFrame("Audio Widget")
       frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE)
 
+      val mixerName = new JComboBox[String](mixerNames)
+
       val graph = new Graph(400)
       GraphWindow.this.oscilloscope = Some(graph)
 
@@ -43,6 +45,7 @@ class GraphWindow {
       val container = new JPanel()
       container.setLayout(new BoxLayout(container, BoxLayout.Y_AXIS))
 
+      container.add(mixerName)
       container.add(graph)
       container.add(keyboard)
       container.add(GraphWindow.this.intensity.get)

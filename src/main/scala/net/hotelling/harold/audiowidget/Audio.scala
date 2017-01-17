@@ -74,6 +74,22 @@ object Audio {
     line.getLineInfo.asInstanceOf[DataLine.Info].getFormats
   }
 
+  def supportsInput(mixer: Mixer, lineInfo: Line.Info): Boolean = {
+    val line = mixer.getLine(lineInfo)
+    line match {
+      case tdl: TargetDataLine => !tdl.getLineInfo.asInstanceOf[Info].getFormats.isEmpty
+      case _ => false
+    }
+  }
+
+  def supportsInput(mixerInfo: Mixer.Info): Boolean = {
+    val mixer: Mixer = AudioSystem.getMixer(mixerInfo)
+    mixer.getTargetLineInfo.exists(supportsInput(mixer, _))
+  }
+
+  def mixerNamesWithInputSupport(): Array[String] =
+    AudioSystem.getMixerInfo.toList.filter(supportsInput).map(_.getName).toArray
+
   def dumpInfo(): Unit = {
     val mixers = AudioSystem.getMixerInfo
     mixers.foreach { mixerInfo =>
