@@ -30,9 +30,9 @@ object DFT {
       spin(freq).magnitude
     }.toArray
   }
-}
 
-case class Point(x: Double, y: Double) {
-  def +(that: Point): Point = Point(this.x + that.x, this.y + that.y)
-  def magnitude: Double = Math.sqrt((x * x) + (y * y))
+  case class Point(x: Double, y: Double) {
+    def +(that: Point): Point = Point(this.x + that.x, this.y + that.y)
+    def magnitude: Double = Math.sqrt((x * x) + (y * y))
+  }
 }

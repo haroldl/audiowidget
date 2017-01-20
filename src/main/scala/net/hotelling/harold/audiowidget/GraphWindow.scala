@@ -9,6 +9,7 @@ import javax.swing._
 class GraphWindow(val mixerNames: Array[String]) {
   @volatile var oscilloscope: Option[Graph] = None
   @volatile var intensity: Option[Graph] = None
+  @volatile var zScores: Option[Graph] = None
 
   def display(): Unit = {
     SwingUtilities.invokeLater(DisplayDriver)
@@ -16,9 +17,11 @@ class GraphWindow(val mixerNames: Array[String]) {
 
   def getMaxYValueForOscilloscope: Option[Int] = oscilloscope.map { g => (g.getHeight - g.margin) / 2 }
   def getMaxYValueForFrequencies: Option[Int] = intensity.map { g => (g.getHeight - g.margin) / 2 }
+  def getMaxYValueForZScores: Option[Int] = zScores.map { g => (g.getHeight - g.margin) / 2 }
 
   def setData(data: Array[Int]): Unit = setDataInOptionalGraph(oscilloscope, data)
   def setIntensity(data: Array[Int]): Unit = setDataInOptionalGraph(intensity, data)
+  def setZScores(data: Array[Int]): Unit = setDataInOptionalGraph(zScores, data)
 
   private def setDataInOptionalGraph(target: Option[Graph], data: Array[Int]): Unit = {
     target.foreach { g =>
@@ -33,22 +36,26 @@ class GraphWindow(val mixerNames: Array[String]) {
       val frame = new JFrame("Audio Widget")
       frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE)
 
-      val mixerName = new JComboBox[String](mixerNames)
-
-      val graph = new Graph(400)
-      GraphWindow.this.oscilloscope = Some(graph)
-
-      val keyboard = new Keyboard()
-
-      GraphWindow.this.intensity = Some(new Graph(200))
-
       val container = new JPanel()
       container.setLayout(new BoxLayout(container, BoxLayout.Y_AXIS))
 
+      val mixerName = new JComboBox[String](mixerNames)
       container.add(mixerName)
+
+      val graph = new Graph(400)
+      GraphWindow.this.oscilloscope = Some(graph)
       container.add(graph)
+
+      val intensity = new Graph(200)
+      GraphWindow.this.intensity = Some(intensity)
+      container.add(intensity)
+
+      val zScores = new Graph(200)
+      GraphWindow.this.zScores = Some(zScores)
+      container.add(zScores)
+
+      val keyboard = new Keyboard()
       container.add(keyboard)
-      container.add(GraphWindow.this.intensity.get)
 
       frame.getContentPane.add(container)
       frame.pack()
