@@ -9,15 +9,26 @@ import scala.collection.mutable.ArrayBuffer
   * Convert raw data coming in into a sequence of amplitude values.
   */
 class Audio(val format: AudioFormat, val timeWindowMillis: Double = 50.0) {
+  if (format.getEncoding != AudioFormat.Encoding.PCM_UNSIGNED &&
+    format.getEncoding != AudioFormat.Encoding.PCM_SIGNED) {
+    throw new RuntimeException(s"Not sure how to deal with audio format with unsupported encoding: $format")
+  }
+
   val bitsPerFrame: Int = format.getSampleSizeInBits * format.getChannels
+  if (bitsPerFrame % 8 != 0) {
+    // Frames may span across several adjacent bytes so we need to split up data that way.
+    throw new RuntimeException(s"Weird sized audio input frames are not supported: $format")
+  }
+
   val framesInWindow: Int = (format.getFrameRate * timeWindowMillis / 1000.0).toInt
+
   val bufferSize: Int = {
     val desiredSize =(framesInWindow * bitsPerFrame / 16.0).toInt
     // Make sure we ask for a multiple of the frame size in bytes:
     (desiredSize / format.getFrameSize) * format.getFrameSize
   }
 
-  private[this] val buffer = Array.fill[Byte](bufferSize)(0)
+  private[this] val buffer: Array[Byte] = Array.fill[Byte](bufferSize)(0)
 
   def printInfo() {
     println(s"format: $format")
@@ -36,35 +47,36 @@ class Audio(val format: AudioFormat, val timeWindowMillis: Double = 50.0) {
     val bytesRead = line.read(buffer, 0, bufferSize)
     line.stop()
 
+    decode(buffer, bytesRead)
+  }
+
+  /** Decode the input samples into Int values.
+    *
+    * Only takes in the first channel, i.e. the left channel for stereo data.
+    * Compensates for 8- or 16-bit samples, big- or little-endian 16 bit values,
+    * and
+    * TODO: signed versus unsigned values.
+    */
+  def decode(data: Array[Byte], numBytes: Int): Array[Int] = {
     val result = new ArrayBuffer[Int]()
-    if (bitsPerFrame % 8 == 0) {
-      // For now, assume we're working with 16 bit stereo data.
-      if (format.getEncoding != AudioFormat.Encoding.PCM_UNSIGNED &&
-          format.getEncoding != AudioFormat.Encoding.PCM_SIGNED) {
+    // Each frame is an integer number of bytes so we can just split up the bytes into frames.
+    var offsetBytes: Int = 0
+    while (offsetBytes < numBytes - format.getFrameSize) {
+      offsetBytes += format.getFrameSize
+
+      // For now, assume we're working with 8 bit or 16 bit data.
+      val sample: Int = if (format.getSampleSizeInBits == 16) {
+        // Just take 1 channel for now
+        val byte1 = data(offsetBytes)
+        val byte2 = data(offsetBytes + 1)
+        if (format.isBigEndian) (byte1 << 8) + byte2 else (byte2 << 8) + byte1
+      } else if (format.getSampleSizeInBits == 8) {
+        // Just take 1 channel for now
+        data(offsetBytes).toInt
+      } else {
         throw new RuntimeException(s"Not sure how to deal with audio format: $format")
       }
-
-      // Each frame is an integer number of bytes so we can just split up the bytes into frames.
-      var offsetBytes: Int = 0
-      while (offsetBytes < bytesRead - format.getFrameSize) {
-        offsetBytes += format.getFrameSize
-
-        val sample: Int = if (format.getSampleSizeInBits == 16) {
-          // Just take 1 channel for now
-          val byte1 = buffer(offsetBytes)
-          val byte2 = buffer(offsetBytes + 1)
-          if (format.isBigEndian) (byte1 << 8) + byte2 else (byte2 << 8) + byte1
-        } else if (format.getSampleSizeInBits == 8) {
-          // Just take 1 channel for now
-          buffer(offsetBytes).toInt
-        } else {
-          throw new RuntimeException(s"Not sure how to deal with audio format: $format")
-        }
-        result.append(sample)
-      }
-    } else {
-      // Frames may span across several adjacent bytes so we need to split up data that way.
-      throw new RuntimeException(s"weird sized audio input frames are not supported... $format")
+      result.append(sample)
     }
     result.toArray
   }
