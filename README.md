@@ -3,7 +3,7 @@ AudioWidget
 
 Just some playing around with audio data.
 
-Try `gradle runme`.
+Try `./gradlew runme`.
 
 So far:
 * Shows raw audio capture data in the top graph.
