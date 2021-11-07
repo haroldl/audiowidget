@@ -8,18 +8,24 @@ object AudioWidget {
     val window = new GraphWindow(inputMixerNames)
     window.display()
 
-    val mixer = Audio.getMixerByName(inputMixerNames(0))
+    val defaultMixerName = "default [default]"
+    val mixerName = if (inputMixerNames.contains(defaultMixerName)) defaultMixerName else inputMixerNames(0)
+    val mixer = Audio.getMixerByName(mixerName)
     val line = Audio.getSomeInputLine(mixer)
     val parser = new Audio(line.getFormat)
     while (true) {
       val data = parser.readFrames(line)
-      window.setData(rescaleData(data, window.getMaxYValueForOscilloscope.getOrElse(1000).toFloat))
+      if (!data.isEmpty) {
+        window.setData(rescaleData(data, window.getMaxYValueForOscilloscope.getOrElse(1000).toFloat))
 
-      val intensityData = DFT.dft(data, parser.format.getFrameRate, 40, 5000).map { v => (v * 10).toInt }
-      window.setIntensity(rescaleData(intensityData, window.getMaxYValueForFrequencies.getOrElse(1000).toFloat))
+        val intensityData = DFT.dft(data, parser.format.getFrameRate, 40, 5000).map { v => (v * 10).toInt }
+        window.setIntensity(rescaleData(intensityData, window.getMaxYValueForFrequencies.getOrElse(1000).toFloat))
 
-      val zS = zScores(intensityData)
-      window.setZScores(zS.map { _ * window.getMaxYValueForZScores.getOrElse(300).toFloat }.map { _.toInt })
+        val zS = zScores(intensityData)
+        window.setZScores(zS.map { _ * window.getMaxYValueForZScores.getOrElse(300).toFloat }.map { _.toInt })
+      } else {
+        println("Empty audio input read.")
+      }
     }
   }
 

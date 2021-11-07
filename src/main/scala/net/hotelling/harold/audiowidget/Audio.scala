@@ -27,25 +27,39 @@ class Audio(val format: AudioFormat, val timeWindowMillis: Double = 50.0) {
   }
 
   def readFrames(line: TargetDataLine): Array[Int] = {
-    val result = new ArrayBuffer[Int]()
+    // By monitoring line.available I discovered that the backlog of input data
+    // kept growing and growing and I needed to flush the data each time.  This
+    // way each sample is current and the UI does not being to lag behind.
+    line.flush
 
     line.start()
     val bytesRead = line.read(buffer, 0, bufferSize)
     line.stop()
 
+    val result = new ArrayBuffer[Int]()
     if (bitsPerFrame % 8 == 0) {
       // For now, assume we're working with 16 bit stereo data.
-      if (format.getFrameSize != 4) throw new RuntimeException(s"Not sure how to deal with audio format: $format")
+      if (format.getEncoding != AudioFormat.Encoding.PCM_UNSIGNED &&
+          format.getEncoding != AudioFormat.Encoding.PCM_SIGNED) {
+        throw new RuntimeException(s"Not sure how to deal with audio format: $format")
+      }
 
       // Each frame is an integer number of bytes so we can just split up the bytes into frames.
       var offsetBytes: Int = 0
       while (offsetBytes < bytesRead - format.getFrameSize) {
         offsetBytes += format.getFrameSize
 
-        // Just take 1 channel for now
-        val byte1 = buffer(offsetBytes)
-        val byte2 = buffer(offsetBytes + 1)
-        val sample: Int = if (format.isBigEndian) (byte1 << 8) + byte2 else (byte2 << 8) + byte1
+        val sample: Int = if (format.getSampleSizeInBits == 16) {
+          // Just take 1 channel for now
+          val byte1 = buffer(offsetBytes)
+          val byte2 = buffer(offsetBytes + 1)
+          if (format.isBigEndian) (byte1 << 8) + byte2 else (byte2 << 8) + byte1
+        } else if (format.getSampleSizeInBits == 8) {
+          // Just take 1 channel for now
+          buffer(offsetBytes).toInt
+        } else {
+          throw new RuntimeException(s"Not sure how to deal with audio format: $format")
+        }
         result.append(sample)
       }
     } else {
