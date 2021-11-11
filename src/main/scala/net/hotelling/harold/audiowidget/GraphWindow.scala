@@ -10,6 +10,11 @@ class GraphWindow(val mixerNames: Array[String]) {
   @volatile var oscilloscope: Option[Graph] = None
   @volatile var intensity: Option[Graph] = None
   @volatile var zScores: Option[Graph] = None
+  @volatile var strongestFrequencyHz: Option[Int] = None
+
+  val strongestFrequencyHzLabel: JLabel = new JLabel("")
+  strongestFrequencyHzLabel.setPreferredSize(new Dimension(100, 50))
+  strongestFrequencyHzLabel.setHorizontalAlignment(SwingConstants.RIGHT)
 
   def display(): Unit = {
     SwingUtilities.invokeLater(DisplayDriver)
@@ -22,6 +27,10 @@ class GraphWindow(val mixerNames: Array[String]) {
   def setData(data: Array[Int]): Unit = setDataInOptionalGraph(oscilloscope, data)
   def setIntensity(data: Array[Int]): Unit = setDataInOptionalGraph(intensity, data)
   def setZScores(data: Array[Int]): Unit = setDataInOptionalGraph(zScores, data)
+  def setStrongestFrequencyHz(value: Int): Unit = {
+    strongestFrequencyHz = Some(value)
+    strongestFrequencyHzLabel.setText(s"$value Hz")
+  }
 
   private def setDataInOptionalGraph(target: Option[Graph], data: Array[Int]): Unit = {
     target.foreach { g =>
@@ -49,6 +58,11 @@ class GraphWindow(val mixerNames: Array[String]) {
       val intensity = new Graph(200)
       GraphWindow.this.intensity = Some(intensity)
       container.add(intensity)
+
+      val freqPanel = new JPanel()
+      freqPanel.add(new JLabel("Strongest frequency:"))
+      freqPanel.add(strongestFrequencyHzLabel)
+      container.add(freqPanel)
 
       val zScores = new Graph(200)
       GraphWindow.this.zScores = Some(zScores)
